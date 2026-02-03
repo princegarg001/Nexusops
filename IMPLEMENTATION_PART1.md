@@ -1,6 +1,17 @@
 # 🚀 Enterprise Multi-Cloud GitOps Platform with DevSecOps
 ## Part 1: Infrastructure, Kubernetes Clusters & GitOps Foundation
 
+> ## 💰 AWS FREE TIER + LOCAL DEVELOPMENT VERSION
+> **This guide uses AWS Free Tier + local tools to minimize costs!**
+> 
+> | Component | Where It Runs | Cost |
+> |-----------|---------------|------|
+> | Kubernetes Cluster | Local (Minikube) | 💚 FREE |
+> | Container Registry | AWS ECR | 💚 FREE (500MB) |
+> | Object Storage | AWS S3 | 💚 FREE (5GB) |
+> | CI/CD | GitHub Actions | 💚 FREE (2000 mins/mo) |
+> | All Platform Tools | Local cluster | 💚 FREE |
+
 ---
 
 ## 📋 Table of Contents - Part 1
@@ -9,9 +20,10 @@
 2. [Architecture Design](#architecture-design)
 3. [Prerequisites & Tools](#prerequisites--tools)
 4. [Phase 1: Local Development Environment](#phase-1-local-development-environment)
-5. [Phase 2: Cloud Infrastructure Setup](#phase-2-cloud-infrastructure-setup)
-6. [Phase 3: Kubernetes Cluster Provisioning](#phase-3-kubernetes-cluster-provisioning)
-7. [Phase 4: GitOps with Argo CD](#phase-4-gitops-with-argo-cd)
+5. [Phase 1.5: AWS Free Tier Setup](#phase-15-aws-free-tier-setup) 🆕 *ECR + S3*
+6. [Phase 2: Cloud Infrastructure Setup](#phase-2-cloud-infrastructure-setup) ⏭️ *Reference only*
+7. [Phase 2-LOCAL: Local Kubernetes Setup (FREE)](#phase-2-local-local-kubernetes-setup-free) ✅ *Use this!*
+8. [Phase 4: GitOps with Argo CD](#phase-4-gitops-with-argo-cd)
 8. [Repository Structure](#repository-structure)
 
 ---
@@ -22,67 +34,135 @@
 
 An enterprise-grade, production-ready platform that combines:
 
-| Component | Technology | Purpose |
-|-----------|------------|---------|
-| **Multi-Cloud K8s** | EKS + AKS + GKE | High availability, vendor independence |
-| **GitOps** | Argo CD | Declarative, auditable deployments |
-| **Service Mesh** | Istio | Zero-trust security, traffic management |
-| **DevSecOps** | Trivy, OPA, Snyk | Shift-left security |
-| **Observability** | Prometheus, Grafana, Jaeger | Full-stack monitoring |
-| **Autoscaling** | HPA, VPA, Cluster Autoscaler | Cost optimization |
+| Component | Technology | Where It Runs | Cost |
+|-----------|------------|---------------|------|
+| **Kubernetes** | Minikube | Local machine | 💚 FREE |
+| **Container Registry** | AWS ECR | AWS Free Tier | 💚 FREE (500MB) |
+| **Object Storage** | AWS S3 | AWS Free Tier | 💚 FREE (5GB) |
+| **GitOps** | Argo CD | Local cluster | 💚 FREE |
+| **Service Mesh** | Istio | Local cluster | 💚 FREE |
+| **DevSecOps** | Trivy, OPA | Local cluster | 💚 FREE |
+| **Observability** | Prometheus, Grafana | Local cluster | 💚 FREE |
+| **CI/CD** | GitHub Actions | GitHub | 💚 FREE (2000 mins) |
 
-### Project Timeline
+> 🎓 **Learning Note**: You get real AWS experience while keeping costs at $0!
+>
+> ⚠️ **Important**: EKS (managed Kubernetes) costs ~$73/month. We use local Minikube instead!
+
+### Project Timeline (AWS Free Tier + Local)
 
 ```
-Week 1-2: Infrastructure & Clusters
-Week 3-4: GitOps & Service Mesh
-Week 5-6: Security & Observability
-Week 7-8: Testing, Optimization & Documentation
+Week 1: Local Kubernetes + AWS Account Setup - FREE
+        └─ Minikube cluster + AWS CLI + ECR + S3
+
+Week 2: GitOps with Argo CD - FREE
+        └─ Argo CD on local cluster, images from ECR
+
+Week 3: Service Mesh (Istio) - FREE
+        └─ Full Istio setup on local cluster
+
+Week 4: Security Tools (Trivy, OPA) - FREE
+        └─ Scan images, enforce policies
+
+Week 5: Observability Stack - FREE
+        └─ Prometheus, Grafana, Jaeger
+
+Week 6: CI/CD Pipeline + Testing - FREE
+        └─ GitHub Actions → ECR → Argo CD
 ```
+
+### AWS Free Tier Limits (12 months)
+
+| Service | Free Tier Limit | Our Usage |
+|---------|-----------------|------------|
+| EC2 | 750 hrs t2.micro/month | Not needed (local K8s) |
+| ECR | 500 MB storage | ✅ Container images |
+| S3 | 5 GB storage | ✅ Terraform state, backups |
+| Lambda | 1M requests/month | Optional |
+| CloudWatch | 10 metrics | ✅ Basic monitoring |
 
 ---
 
 ## 🏗️ Architecture Design
 
-### High-Level Architecture
+### High-Level Architecture (AWS Free Tier + Local Kubernetes)
 
 ```
-                                    ┌─────────────────────────────────────┐
-                                    │         GitHub Repository           │
-                                    │    (Infrastructure + App Configs)   │
-                                    └──────────────────┬──────────────────┘
+┌─────────────────────────────────────────────────────────────────────────────────────────┐
+│                                    DEVELOPER WORKFLOW                                    │
+└─────────────────────────────────────────────┬───────────────────────────────────────────┘
+                                              │
+                    ┌─────────────────────────▼─────────────────────────┐
+                    │              GitHub Repository                     │
+                    │         (Code + K8s Manifests + IaC)              │
+                    │                  💚 FREE                           │
+                    └─────────────────────────┬─────────────────────────┘
+                                              │
+                    ┌─────────────────────────▼─────────────────────────┐
+                    │            GitHub Actions (CI/CD)                  │
+                    │      Build → Test → Scan → Push to ECR            │
+                    │           💚 FREE (2000 mins/month)                │
+                    └─────────────────────────┬─────────────────────────┘
+                                              │
+        ┌─────────────────────────────────────┴─────────────────────────────────────┐
+        │                                                                           │
+        ▼                                                                           ▼
+┌───────────────────────────────┐                           ┌───────────────────────────────┐
+│      ☁️ AWS FREE TIER         │                           │   🖥️ LOCAL KUBERNETES         │
+│                               │                           │      (Minikube/Kind)          │
+│  ┌─────────────────────────┐  │                           │                               │
+│  │    ECR (Container       │  │    docker pull            │  ┌─────────────────────────┐  │
+│  │    Registry)            │──┼───────────────────────────┼─▶│    Applications         │  │
+│  │    💚 FREE 500MB        │  │                           │  │    (Your Apps Run Here) │  │
+│  └─────────────────────────┘  │                           │  └─────────────────────────┘  │
+│                               │                           │                               │
+│  ┌─────────────────────────┐  │                           │  ┌─────────────────────────┐  │
+│  │    S3 (Terraform        │  │                           │  │    Argo CD              │  │
+│  │    State + Backups)     │  │                           │  │    (GitOps Deployments) │  │
+│  │    💚 FREE 5GB          │  │                           │  └─────────────────────────┘  │
+│  └─────────────────────────┘  │                           │                               │
+│                               │                           │  ┌─────────────────────────┐  │
+│  ┌─────────────────────────┐  │                           │  │    Istio                │  │
+│  │    IAM (Access          │  │                           │  │    (Service Mesh)       │  │
+│  │    Management)          │  │                           │  └─────────────────────────┘  │
+│  │    💚 FREE              │  │                           │                               │
+│  └─────────────────────────┘  │                           │  ┌─────────────────────────┐  │
+│                               │                           │  │    Prometheus/Grafana   │  │
+└───────────────────────────────┘                           │  │    (Monitoring)         │  │
+                                                            │  └─────────────────────────┘  │
+                                                            │                               │
+                                                            │  💚 ALL FREE (runs locally)   │
+                                                            └───────────────────────────────┘
+
+💡 This setup gives you REAL AWS experience while keeping costs at $0!
+```
+
+### How It All Connects
+
+```
+1. You push code to GitHub
+         ↓
+2. GitHub Actions builds Docker image
+         ↓
+3. Image pushed to AWS ECR (free tier)
+         ↓
+4. Argo CD (on local cluster) detects change
+         ↓
+5. Argo CD pulls image from ECR
+         ↓
+6. App deployed to local Kubernetes
+         ↓
+7. Istio manages traffic, Prometheus monitors
+```
+                    └──────────────────────────────────┼──────────────────────────────────┘
                                                        │
                                     ┌──────────────────▼──────────────────┐
-                                    │          GitHub Actions             │
-                                    │   (CI Pipeline + Security Scans)    │
-                                    └──────────────────┬──────────────────┘
-                                                       │
-                         ┌─────────────────────────────┼─────────────────────────────┐
-                         │                             │                             │
-              ┌──────────▼──────────┐      ┌──────────▼──────────┐      ┌──────────▼──────────┐
-              │     AWS (EKS)       │      │    Azure (AKS)      │      │     GCP (GKE)       │
-              │  ┌───────────────┐  │      │  ┌───────────────┐  │      │  ┌───────────────┐  │
-              │  │   Argo CD     │◄─┼──────┼──│   Argo CD     │◄─┼──────┼──│   Argo CD     │  │
-              │  │   (GitOps)    │  │      │  │   (GitOps)    │  │      │  │   (GitOps)    │  │
-              │  └───────┬───────┘  │      │  └───────┬───────┘  │      │  └───────┬───────┘  │
-              │          │          │      │          │          │      │          │          │
-              │  ┌───────▼───────┐  │      │  ┌───────▼───────┐  │      │  ┌───────▼───────┐  │
-              │  │    Istio      │  │      │  │    Istio      │  │      │  │    Istio      │  │
-              │  │ Service Mesh  │  │      │  │ Service Mesh  │  │      │  │ Service Mesh  │  │
-              │  └───────┬───────┘  │      │  └───────┬───────┘  │      │  └───────┬───────┘  │
-              │          │          │      │          │          │      │          │          │
-              │  ┌───────▼───────┐  │      │  ┌───────▼───────┐  │      │  ┌───────▼───────┐  │
-              │  │ Applications  │  │      │  │ Applications  │  │      │  │ Applications  │  │
-              │  │  (Microsvcs)  │  │      │  │  (Microsvcs)  │  │      │  │  (Microsvcs)  │  │
-              │  └───────────────┘  │      │  └───────────────┘  │      │  └───────────────┘  │
-              └─────────────────────┘      └─────────────────────┘      └─────────────────────┘
-                         │                             │                             │
-                         └─────────────────────────────┼─────────────────────────────┘
-                                                       │
-                                    ┌──────────────────▼──────────────────┐
-                                    │      Centralized Observability      │
-                                    │  Prometheus │ Grafana │ Jaeger      │
+                                    │        Sample Applications         │
+                                    │    (Frontend + Backend + API)      │
+                                    │            💚 FREE                 │
                                     └─────────────────────────────────────┘
+
+💡 UPGRADE PATH: When ready, deploy same configs to AWS/Azure/GCP using free credits!
 ```
 
 ### Network Architecture
@@ -113,15 +193,19 @@ Week 7-8: Testing, Optimization & Documentation
 
 ## 🛠️ Prerequisites & Tools
 
-### Required Accounts
+### Required Accounts (For Local Development)
 
-| Provider | What You Need | Free Tier Available |
-|----------|---------------|---------------------|
-| AWS | AWS Account with admin access | Yes (12 months) |
-| Azure | Azure Subscription | Yes ($200 credit) |
-| GCP | GCP Project with billing | Yes ($300 credit) |
-| GitHub | GitHub account | Yes |
-| Docker Hub | Docker Hub account | Yes |
+| Provider | What You Need | Cost | Required Now? |
+|----------|---------------|------|---------------|
+| **GitHub** | GitHub account | 💚 FREE | ✅ Yes |
+| **Docker Hub** | Docker Hub account | 💚 FREE | ✅ Yes |
+| AWS | AWS Account | $300 credit | ❌ Optional (later) |
+| Azure | Azure Subscription | $200 credit | ❌ Optional (later) |
+| GCP | GCP Project | $300 credit | ❌ Optional (later) |
+
+> 🎯 **For Zero-Cost Learning**: You only need GitHub + Docker Hub accounts (both free)!
+> 
+> Cloud accounts are optional and only needed if you want to deploy to real cloud later.
 
 ### Local Tools Installation
 
@@ -562,7 +646,152 @@ export GOOGLE_APPLICATION_CREDENTIALS="$(pwd)/gcp-credentials.json"
 
 ---
 
+## ☁️ Phase 1.5: AWS Free Tier Setup
+
+> ### ✅ USE THIS SECTION - All services here are FREE for 12 months!
+>
+> We'll set up AWS services that stay within free tier limits.
+
+### 1.5.1 Create AWS Account (If you don't have one)
+
+1. Go to [aws.amazon.com](https://aws.amazon.com)
+2. Click "Create an AWS Account"
+3. Enter email, password, account name
+4. Add payment method (required but won't be charged if you stay in free tier)
+5. Complete phone verification
+6. Select "Basic Support - Free"
+
+### 1.5.2 Configure AWS CLI
+
+```powershell
+# Install AWS CLI (if not already installed)
+choco install awscli -y
+
+# Configure with your credentials
+aws configure
+# Enter: AWS Access Key ID (from AWS Console → IAM → Users → Security Credentials)
+# Enter: AWS Secret Access Key
+# Enter: Default region: us-east-1
+# Enter: Default output format: json
+
+# Verify connection
+aws sts get-caller-identity
+```
+
+### 1.5.3 Create ECR Repository (FREE - 500MB)
+
+```powershell
+# Create a private container registry
+aws ecr create-repository `
+    --repository-name multicloud-gitops/app `
+    --image-scanning-configuration scanOnPush=true `
+    --region us-east-1
+
+# Get your ECR login command
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $(aws sts get-caller-identity --query Account --output text).dkr.ecr.us-east-1.amazonaws.com
+
+# Your ECR URL will be:
+# <ACCOUNT_ID>.dkr.ecr.us-east-1.amazonaws.com/multicloud-gitops/app
+```
+
+### 1.5.4 Create S3 Bucket for Terraform State (FREE - 5GB)
+
+```powershell
+# Create S3 bucket for Terraform state (bucket names must be globally unique)
+$BUCKET_NAME = "multicloud-gitops-tfstate-$(Get-Random -Maximum 9999)"
+
+aws s3 mb s3://$BUCKET_NAME --region us-east-1
+
+# Enable versioning (best practice)
+aws s3api put-bucket-versioning `
+    --bucket $BUCKET_NAME `
+    --versioning-configuration Status=Enabled
+
+# Block public access (security)
+aws s3api put-public-access-block `
+    --bucket $BUCKET_NAME `
+    --public-access-block-configuration BlockPublicAcls=true,IgnorePublicAcls=true,BlockPublicPolicy=true,RestrictPublicBuckets=true
+
+# Save bucket name for later
+echo "Your S3 bucket: $BUCKET_NAME"
+```
+
+### 1.5.5 Create IAM User for CI/CD (FREE)
+
+```powershell
+# Create IAM user for GitHub Actions
+aws iam create-user --user-name github-actions-deployer
+
+# Attach ECR policy
+aws iam attach-user-policy `
+    --user-name github-actions-deployer `
+    --policy-arn arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryPowerUser
+
+# Create access keys for GitHub Actions
+aws iam create-access-key --user-name github-actions-deployer
+
+# ⚠️ SAVE THESE CREDENTIALS SECURELY!
+# You'll add them to GitHub Secrets later
+```
+
+### 1.5.6 Set Up AWS Budget Alert (Prevent Surprise Charges!)
+
+```powershell
+# Create a $1 budget alert (you'll get emailed if you exceed)
+@"
+{
+    "BudgetName": "FreeTierMonitor",
+    "BudgetLimit": {
+        "Amount": "1",
+        "Unit": "USD"
+    },
+    "BudgetType": "COST",
+    "TimeUnit": "MONTHLY"
+}
+"@ | Out-File -FilePath budget.json -Encoding utf8
+
+aws budgets create-budget `
+    --account-id $(aws sts get-caller-identity --query Account --output text) `
+    --budget file://budget.json
+```
+
+### 1.5.7 Verify Your Free Tier Usage
+
+```powershell
+# Check your current free tier usage
+aws ce get-cost-and-usage `
+    --time-period Start=$(Get-Date -Format "yyyy-MM-01"),End=$(Get-Date -Format "yyyy-MM-dd") `
+    --granularity MONTHLY `
+    --metrics "UnblendedCost" `
+    --output table
+```
+
+### ✅ AWS Free Tier Setup Complete!
+
+You now have:
+| Service | What You Created | Free Tier Limit |
+|---------|------------------|-----------------|
+| **ECR** | Container registry | 500 MB/month |
+| **S3** | Terraform state bucket | 5 GB storage |
+| **IAM** | CI/CD user | Unlimited |
+| **Budget** | $1 alert | Free |
+
+---
+
 ## 🌐 Phase 2: Cloud Infrastructure Setup
+
+> ## ⏭️ REFERENCE ONLY - EKS Costs Money (~$73/month)
+> 
+> **This section covers EKS (managed Kubernetes) which is NOT free tier.**
+> 
+> ✅ **Continue to:** [Phase 2-LOCAL: Local Kubernetes Setup](#phase-2-local-local-kubernetes-setup-free)
+> 
+> 💡 **Keep for later:** When you want to deploy to real cloud infrastructure.
+
+---
+
+<details>
+<summary>📦 <b>Click to expand cloud infrastructure code (for future reference)</b></summary>
 
 ### 2.1 Terraform Backend Configuration
 
@@ -1911,6 +2140,158 @@ output "configure_kubectl" {
   value = "gcloud container clusters get-credentials ${google_container_cluster.main.name} --region ${var.region} --project ${var.project_id}"
 }
 ```
+
+</details>
+
+---
+
+## 🖥️ Phase 2-LOCAL: Local Kubernetes Setup (FREE)
+
+> ### ✅ USE THIS SECTION FOR ZERO-COST LEARNING
+> 
+> This section sets up a **fully functional Kubernetes cluster on your local machine** at no cost.
+> You'll learn the same skills that apply to cloud Kubernetes!
+
+### 2-LOCAL.1 Choose Your Local Kubernetes Tool
+
+| Tool | Best For | Resources Needed | Recommendation |
+|------|----------|------------------|----------------|
+| **Minikube** | Beginners, Full features | 4+ CPU, 8GB+ RAM | ⭐ Recommended |
+| **Kind** | CI/CD, Fast startup | 2+ CPU, 4GB+ RAM | Good alternative |
+| **Docker Desktop K8s** | Mac/Windows users | 4+ CPU, 8GB+ RAM | Easiest setup |
+
+### 2-LOCAL.2 Minikube Setup (Recommended)
+
+```powershell
+# Windows - Install Minikube via Chocolatey
+choco install minikube -y
+
+# Verify installation
+minikube version
+
+# Start cluster with adequate resources for Istio & monitoring
+minikube start --cpus=4 --memory=8192 --driver=docker --kubernetes-version=v1.28.0
+
+# Enable useful addons
+minikube addons enable ingress
+minikube addons enable ingress-dns
+minikube addons enable metrics-server
+minikube addons enable dashboard
+
+# Verify cluster is running
+kubectl cluster-info
+kubectl get nodes
+
+# Access Kubernetes dashboard (optional)
+minikube dashboard
+```
+
+### 2-LOCAL.3 Alternative: Kind Setup
+
+```powershell
+# Windows - Install Kind via Chocolatey
+choco install kind -y
+
+# Create cluster config file
+@"
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+name: multicloud-local
+nodes:
+- role: control-plane
+  kubeadmConfigPatches:
+  - |
+    kind: InitConfiguration
+    nodeRegistration:
+      kubeletExtraArgs:
+        node-labels: "ingress-ready=true"
+  extraPortMappings:
+  - containerPort: 80
+    hostPort: 80
+    protocol: TCP
+  - containerPort: 443
+    hostPort: 443
+    protocol: TCP
+- role: worker
+- role: worker
+"@ | Out-File -FilePath kind-config.yaml -Encoding utf8
+
+# Create cluster
+kind create cluster --config kind-config.yaml
+
+# Verify
+kubectl cluster-info
+kubectl get nodes
+```
+
+### 2-LOCAL.4 Alternative: Docker Desktop Kubernetes
+
+```powershell
+# 1. Open Docker Desktop
+# 2. Go to Settings → Kubernetes
+# 3. Check "Enable Kubernetes"
+# 4. Click "Apply & Restart"
+# 5. Wait for green indicator
+
+# Verify
+kubectl cluster-info
+kubectl get nodes
+```
+
+### 2-LOCAL.5 Create Essential Namespaces
+
+```powershell
+# Create namespaces that match the cloud setup
+kubectl create namespace argocd
+kubectl create namespace istio-system
+kubectl create namespace monitoring
+kubectl create namespace security
+kubectl create namespace apps
+
+# Verify namespaces
+kubectl get namespaces
+```
+
+### 2-LOCAL.6 Install Local Container Registry (Optional but Useful)
+
+```powershell
+# For Minikube - use built-in registry
+minikube addons enable registry
+
+# Access registry at localhost:5000
+# Build and push images directly:
+# docker build -t localhost:5000/myapp:latest .
+# docker push localhost:5000/myapp:latest
+```
+
+### 2-LOCAL.7 Verify Your Local Cluster
+
+```powershell
+# Check everything is running
+kubectl get nodes -o wide
+kubectl get pods -A
+kubectl top nodes  # Requires metrics-server
+
+# Expected output:
+# NAME       STATUS   ROLES           AGE   VERSION
+# minikube   Ready    control-plane   1m    v1.28.0
+```
+
+### 💡 Local Cluster Tips
+
+| Tip | Command |
+|-----|---------|
+| **Stop cluster** (save resources) | `minikube stop` |
+| **Start again** | `minikube start` |
+| **Delete cluster** | `minikube delete` |
+| **SSH into node** | `minikube ssh` |
+| **Check status** | `minikube status` |
+| **View logs** | `minikube logs` |
+
+### 🎯 What's Next?
+
+Your local Kubernetes cluster is now ready! Proceed to:
+- **Phase 4**: Install Argo CD (works exactly the same as cloud!)
 
 ---
 
