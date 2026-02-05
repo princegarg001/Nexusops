@@ -1,0 +1,9 @@
+{
+    "BudgetName": "FreeTierMonitor",
+    "BudgetLimit": {
+        "Amount": "1",
+        "Unit": "USD"
+    },
+    "BudgetType": "COST",
+    "TimeUnit": "MONTHLY"
+}
